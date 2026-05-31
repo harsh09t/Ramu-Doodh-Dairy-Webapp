@@ -5,10 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dairy Manager</title>
 
-  <!-- React aur Babel (JSX chalane ke liye) -->
+  <!-- React aur Babel Loader -->
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Firebase Modern Modules -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    
+    // Inhe window par expose kar rahe hain
+    window.React = React;
+    window.useState = React.useState;
+    window.useEffect = React.useEffect;
+    
+    window.FirebaseApp = { initializeApp };
+    window.FirebaseFirestore = { getFirestore, doc, setDoc, getDoc };
+    window.firebaseLoaded = true;
+  </script>
 
   <style>
     body {
@@ -31,32 +46,41 @@
 
   <div id="root"></div>
 
-  <!-- Firebase Modern Modules Load aur Setup ho rahe hain background mein -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    
-    // Inhe global window object mein daal rahe hain taaki tera App.jsx inhe access kar sake
-    window.FirebaseApp = { initializeApp };
-    window.FirebaseFirestore = { getFirestore, doc, setDoc, getDoc };
-  </script>
-
-  <!-- Is chote se delay ke sath tera main App render hoga taaki Firebase pehle load ho jaye -->
+  <!-- Bootstrapping Script: Ye dhyan rakhega ki pehle Firebase mile, phir App load ho -->
   <script type="text/babel">
-    function Loader() {
-      const [loaded, setLoaded] = React.useState(false);
+    function AppBootstrapper() {
+      const [ready, setReady] = React.useState(false);
+      const [error, setError] = React.useState(null);
 
       React.useEffect(() => {
-        const checkFirebase = setInterval(() => {
-          if (window.FirebaseApp && window.FirebaseFirestore) {
-            setLoaded(true);
-            clearInterval(checkFirebase);
+        const checkGlobals = setInterval(() => {
+          if (window.firebaseLoaded && window.DairyApp) {
+            setReady(true);
+            clearInterval(checkGlobals);
           }
         }, 100);
-        return () => clearInterval(checkFirebase);
+
+        // Max 5 seconds wait karega, nahi toh error dikhayega debug karne ke liye
+        const timeout = setTimeout(() => {
+          clearInterval(checkGlobals);
+          if (!window.DairyApp) {
+            setError("App.jsx load toh hua par 'DairyApp' component nahi mila. Ek baar check karo ki code ke end mein 'export default function DairyApp()' hi likha hai na?");
+          }
+        }, 5000);
+
+        return () => { clearInterval(checkGlobals); clearTimeout(timeout); };
       }, []);
 
-      if (!loaded) {
+      if (error) {
+        return (
+          <div style={{ padding: "20px", color: "#e53935", fontFamily: "sans-serif", fontSize: "14px", lineHeight: "1.5" }}>
+            <h3>⚠️ Configuration Alert</h3>
+            <p>{error}</p>
+          </div>
+        );
+      }
+
+      if (!ready) {
         return (
           <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f8ff" }}>
             <div style={{ textAlign: "center", fontFamily: "Georgia,serif", color: "#7a90aa", fontWeight: 600 }}>
@@ -67,15 +91,26 @@
         );
       }
 
-      return <DairyApp />;
+      // Jab sab ready ho jaye tab tera main app run hoga
+      const TargetApp = window.DairyApp;
+      return <TargetApp />;
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<Loader />);
+    root.render(<AppBootstrapper />);
   </script>
 
-  <!-- Yahan se tera App.jsx load hoga -->
-  <script type="text/babel" src="App.jsx"></script>
+  <!-- Yahan se tera original App.jsx load ho raha hai -->
+  <script type="text/babel" src="App.jsx" data-plugins="transform-modules-umd"></script>
+
+  <script type="text/babel">
+    // Yeh line aapke exported component ko browser ke window ke sath bind kar degi
+    if (typeof DairyApp !== 'undefined') {
+      window.DairyApp = DairyApp;
+    } else if (window.exports && window.exports.default) {
+      window.DairyApp = window.exports.default;
+    }
+  </script>
 
 </body>
 </html>
