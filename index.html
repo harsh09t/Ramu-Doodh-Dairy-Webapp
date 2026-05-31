@@ -5,17 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dairy Manager</title>
 
-  <!-- React aur Babel Loader -->
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Firebase Modern Modules -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     
-    // Inhe window par expose kar rahe hain
     window.React = React;
     window.useState = React.useState;
     window.useEffect = React.useEffect;
@@ -46,7 +43,6 @@
 
   <div id="root"></div>
 
-  <!-- Bootstrapping Script: Ye dhyan rakhega ki pehle Firebase mile, phir App load ho -->
   <script type="text/babel">
     function AppBootstrapper() {
       const [ready, setReady] = React.useState(false);
@@ -54,19 +50,22 @@
 
       React.useEffect(() => {
         const checkGlobals = setInterval(() => {
-          if (window.firebaseLoaded && window.DairyApp) {
+          // Hum check kar rahe hain ki aapka original component global scope me aaya ya nahi
+          const MainComponent = window.Dairy || (typeof Dairy !== 'undefined' ? Dairy : null);
+          
+          if (window.firebaseLoaded && MainComponent) {
+            window.ActualDairyComponent = MainComponent;
             setReady(true);
             clearInterval(checkGlobals);
           }
         }, 100);
 
-        // Max 5 seconds wait karega, nahi toh error dikhayega debug karne ke liye
         const timeout = setTimeout(() => {
           clearInterval(checkGlobals);
-          if (!window.DairyApp) {
-            setError("App.jsx load toh hua par 'DairyApp' component nahi mila. Ek baar check karo ki code ke end mein 'export default function DairyApp()' hi likha hai na?");
+          if (!window.ActualDairyComponent) {
+            setError("App.jsx load toh hua par browser ko aapke main component ka naam nahi mila. Ek baar check karo ki main component ka naam 'Dairy' hi hai na?");
           }
-        }, 5000);
+        }, 6000);
 
         return () => { clearInterval(checkGlobals); clearTimeout(timeout); };
       }, []);
@@ -91,8 +90,7 @@
         );
       }
 
-      // Jab sab ready ho jaye tab tera main app run hoga
-      const TargetApp = window.DairyApp;
+      const TargetApp = window.ActualDairyComponent;
       return <TargetApp />;
     }
 
@@ -100,13 +98,20 @@
     root.render(<AppBootstrapper />);
   </script>
 
-  <!-- Yahan se tera original App.jsx load ho raha hai -->
   <script type="text/babel" src="App.jsx" data-plugins="transform-modules-umd"></script>
 
   <script type="text/babel">
-  // Agar aapke component ka naam kuch aur hai, toh 'DairyApp' ki jagah woh naam likh dena
-  window.DairyApp = typeof DairyApp !== 'undefined' ? DairyApp : (window.DairyApp || null);
-</script>
+    // Agar component ka naam Dairy hai toh use window par bind karo
+    setTimeout(() => {
+      if (typeof Dairy !== 'undefined') {
+        window.Dairy = Dairy;
+      } else if (window.exports && window.exports.Dairy) {
+        window.Dairy = window.exports.Dairy;
+      } else if (window.exports && window.exports.default) {
+        window.Dairy = window.exports.default;
+      }
+    }, 200);
+  </script>
 
 </body>
 </html>
