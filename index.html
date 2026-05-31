@@ -104,13 +104,9 @@
   <script type="text/babel" src="App.jsx" data-plugins="transform-modules-umd"></script>
 
   <script type="text/babel">
-    // Yeh line aapke exported component ko browser ke window ke sath bind kar degi
-    if (typeof DairyApp !== 'undefined') {
-      window.DairyApp = DairyApp;
-    } else if (window.exports && window.exports.default) {
-      window.DairyApp = window.exports.default;
-    }
-  </script>
+  // Agar aapke component ka naam kuch aur hai, toh 'DairyApp' ki jagah woh naam likh dena
+  window.DairyApp = typeof DairyApp !== 'undefined' ? DairyApp : (window.DairyApp || null);
+</script>
 
 </body>
 </html>
