@@ -1,12 +1,6 @@
-// Pehle ye tha:
-// import { useState, useEffect } from "react";
-// import { initializeApp } from "firebase/app";
-// import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
-
-// Unko hata kar bas ye likh de:
 const { useState, useEffect } = React;
-const { initializeApp } = FirebaseApp;
-const { getFirestore, doc, setDoc, getDoc } = FirebaseFirestore;
+const { initializeApp } = window.FirebaseApp;
+const { getFirestore, doc, setDoc, getDoc } = window.FirebaseFirestore;
 
 // ── FIREBASE SETUP ──────────────────────────────────────────────────
 const firebaseConfig = {
@@ -17,6 +11,8 @@ const firebaseConfig = {
   messagingSenderId: "651048776070",
   appId: "1:651048776070:web:0ca12c6bdff39e2f303c07"
 };
+
+// ... iske neeche ka tera poora code 100% same rahega, kuch mat badalna!
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
