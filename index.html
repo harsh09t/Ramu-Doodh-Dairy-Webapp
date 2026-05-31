@@ -5,15 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dairy Manager</title>
 
+  <!-- 1. React aur Babel Loaders -->
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <!-- 2. Firebase Libraries -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     
-    // Inhe global variables bana rahe hain taaki aapka code access kar sake
+    // Inhe global window variables bana rahe hain taaki niche wale code ko direct mil sakein
     window.React = React;
     window.useState = React.useState;
     window.useEffect = React.useEffect;
@@ -25,13 +27,14 @@
   </script>
 
   <style>
+    /* Default resets aur basic styling taaki app center me fluid dikhe */
     body {
       margin: 0;
       padding: 0;
       background-color: #f4f8ff;
       display: flex;
       justify-content: center;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     #root {
       width: 100%;
@@ -46,70 +49,75 @@
 
   <div id="root"></div>
 
+  <!-- 3. MAIN APPLICATION ENGINE (Yahan par aapka poora code chalega) -->
   <script type="text/babel">
+    // Global Hooks Extract kar rahe hain
+    const { useState, useEffect, useRef } = React;
+
+    // Bootstrapper checking sequence
     function AppRunner() {
-      const [status, setStatus] = React.useState("loading");
+      const [dbReady, setDbReady] = useState(false);
 
-      React.useEffect(() => {
-        let attempts = 0;
-        const checker = setInterval(() => {
-          attempts++;
-          
-          // Hum check kar rahe hain ki kya aapka original component (Dairy) browser ko mil gaya hai
-          const TargetComponent = window.Dairy || (typeof Dairy !== 'undefined' ? Dairy : null);
-
-          if (window.firebaseIsReady && TargetComponent) {
-            window.FinalRenderApp = TargetComponent;
-            setStatus("ready");
-            clearInterval(checker);
+      useEffect(() => {
+        const checkFirebase = setInterval(() => {
+          if (window.firebaseIsReady) {
+            setDbReady(true);
+            clearInterval(checkFirebase);
           }
-          
-          // Agar 8 seconds tak load nahi hua toh fallback dega
-          if (attempts > 80) {
-            clearInterval(checker);
-            setStatus("error");
-          }
-        }, 100);
-
-        return () => clearInterval(checker);
+        }, 50);
+        return () => clearInterval(checkFirebase);
       }, []);
 
-      if (status === "loading") {
+      if (!dbReady) {
         return (
           <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f8ff" }}>
             <div style={{ textAlign: "center", color: "#4a90d9", fontWeight: 600 }}>
-              <div style={{ fontSize: "55px", animation: "bounce 1s infinite alternative" }}>🥛</div>
-              <div style={{ marginTop: "10px", fontSize: "15px", letterSpacing: "0.5px" }}>Starting Ramu Dairy...</div>
+              <div style={{ fontSize: "55px" }}>🥛</div>
+              <div style={{ marginTop: "10px", fontSize: "15px" }}>Starting Ramu Dairy...</div>
             </div>
           </div>
         );
       }
 
-      if (status === "error") {
-        return (
-          <div style={{ padding: "24px", color: "#e53935", fontSize: "14px", lineHeight: "1.6" }}>
-            <h3 style={{ margin: "0 0 8px 0" }}>⚠️ Engine Optimization Needed</h3>
-            <p>Bhai, files successfully load ho gayi hain par code setup static hosting par thoda sync nahi ho pa raha. Ek baar check karo ki 'App.jsx' ke end me 'export default function Dairy()' ya sirf function ka naam 'Dairy' hi hai na?</p>
-          </div>
-        );
-      }
-
-      const LiveApp = window.FinalRenderApp;
-      return <LiveApp />;
+      return <Dairy />;
     }
 
+    // =========================================================================
+    // TERA ORIGINAL CODE YAHAN SE SHURU HOTA HAI
+    // =========================================================================
+    
+    // ── FIREBASE CONFIGURATION ──
+    const firebaseConfig = {
+      apiKey: "AIzaSyAxadt7Kl7pwzfgcEm6G98jvF3Ki-AB34o",
+      authDomain: "dairy-manager-6d898.firebaseapp.com",
+      projectId: "dairy-manager-6d898",
+      storageBucket: "dairy-manager-6d898.firebasestorage.app",
+      messagingSenderId: "651048776070",
+      appId: "1:651048776070:web:0ca12c6bdff39e2f303c07"
+    };
+
+    // Firebase Core initializations string use karke global window reference se
+    const app = window.FirebaseApp.initializeApp(firebaseConfig);
+    const db = window.FirebaseFirestore.getFirestore(app);
+    const { doc, setDoc, getDoc } = window.FirebaseFirestore;
+
+    function Dairy() {
+      // PASTE_YOUR_APP_JSX_CODE_HERE
+      // Bhai, jo aapki 'App.jsx' file ka poora code hai, usme se shuruat ke imports ko chhodkar, 
+      // 'function Dairy() {' ke andar ka jitna bhi logic, hooks, functions, return layout hai, 
+      // usey yahan is function ke andar dhyan se paste kar do!
+      
+      return (
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          <h2>Dairy Dashboard Loaded!</h2>
+          <p>Bhai agar ye screen dikh rahi hai, matlab integration complete hai.</p>
+        </div>
+      );
+    }
+
+    // Final Rendering Trigger
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<AppRunner />);
-  </script>
-
-  <script type="text/babel" src="App.jsx" data-plugins="transform-modules-umd"></script>
-
-  <script type="text/babel">
-    setTimeout(() => {
-      if (typeof Dairy !== 'undefined') { window.Dairy = Dairy; }
-      else if (window.exports && window.exports.default) { window.Dairy = window.exports.default; }
-      else if (window.exports && window.exports.Dairy) { window.Dairy = window.exports.Dairy; }
-    }, 150);
   </script>
 
 </body>
