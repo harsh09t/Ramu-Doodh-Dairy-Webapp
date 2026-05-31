@@ -15,7 +15,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     
-    // Inhe global window variables bana rahe hain taaki niche wale code ko direct mil sakein
+    // Sabhi ko global window object me declare kar rahe hain taaki App.jsx ko mil sakein
     window.React = React;
     window.useState = React.useState;
     window.useEffect = React.useEffect;
@@ -27,7 +27,6 @@
   </script>
 
   <style>
-    /* Default resets aur basic styling taaki app center me fluid dikhe */
     body {
       margin: 0;
       padding: 0;
@@ -49,73 +48,67 @@
 
   <div id="root"></div>
 
-  <!-- 3. MAIN APPLICATION ENGINE (Yahan par aapka poora code chalega) -->
+  <!-- 3. Yahan se aapki original App.jsx load hogi -->
+  <!-- Humne isme automatic module wrapper lagaya hai taaki ye bina crash kiye saare components nikal sake -->
+  <script type="text/babel" src="App.jsx" data-plugins="transform-modules-umd"></script>
+
+  <!-- 4. Bootstrapping Layer: Yeh automatic dhoondhega ki aapke component ka naam kya hai -->
   <script type="text/babel">
-    // Global Hooks Extract kar rahe hain
-    const { useState, useEffect, useRef } = React;
-
-    // Bootstrapper checking sequence
     function AppRunner() {
-      const [dbReady, setDbReady] = useState(false);
+      const [component, setComponent] = React.useState(null);
+      const [status, setStatus] = React.useState("loading");
 
-      useEffect(() => {
-        const checkFirebase = setInterval(() => {
-          if (window.firebaseIsReady) {
-            setDbReady(true);
-            clearInterval(checkFirebase);
+      React.useEffect(() => {
+        let attempts = 0;
+        const checker = setInterval(() => {
+          attempts++;
+          
+          // Yeh automatic check karega ki pure page par aapka main component kis naam se aaya hai
+          const FoundComponent = window.Dairy || 
+                                 window.DairyApp || 
+                                 (typeof Dairy !== 'undefined' ? Dairy : null) || 
+                                 (typeof DairyApp !== 'undefined' ? DairyApp : null) ||
+                                 (window.exports && (window.exports.default || window.exports.Dairy || window.exports.DairyApp));
+
+          if (window.firebaseIsReady && FoundComponent) {
+            setComponent(() => FoundComponent);
+            setStatus("ready");
+            clearInterval(checker);
           }
-        }, 50);
-        return () => clearInterval(checkFirebase);
+          
+          if (attempts > 60) { // 6 seconds tak wait karega
+            clearInterval(checker);
+            setStatus("error");
+          }
+        }, 100);
+
+        return () => clearInterval(checker);
       }, []);
 
-      if (!dbReady) {
+      if (status === "loading") {
         return (
           <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f8ff" }}>
             <div style={{ textAlign: "center", color: "#4a90d9", fontWeight: 600 }}>
               <div style={{ fontSize: "55px" }}>🥛</div>
-              <div style={{ marginTop: "10px", fontSize: "15px" }}>Starting Ramu Dairy...</div>
+              <div style={{ marginTop: "10px", fontSize: "15px" }}>Starting Dairy...</div>
             </div>
           </div>
         );
       }
 
-      return <Dairy />;
+      if (status === "error") {
+        return (
+          <div style={{ padding: "24px", color: "#e53935", fontSize: "14px", lineHeight: "1.6" }}>
+            <h3 style={{ margin: "0 0 8px 0" }}>⚠️ Load Alert</h3>
+            <p>Bhai, file toh load ho gayi par component name mix-match ho raha hai. Ek baar mujhe apni poori 'App.jsx' file ka code copy-paste karke yahan chat me bhej de, main 2 minute me usey perfect format karke de dunga!</p>
+          </div>
+        );
+      }
+
+      const LiveApp = component;
+      return <LiveApp />;
     }
 
-    // =========================================================================
-    // TERA ORIGINAL CODE YAHAN SE SHURU HOTA HAI
-    // =========================================================================
-    
-    // ── FIREBASE CONFIGURATION ──
-    const firebaseConfig = {
-      apiKey: "AIzaSyAxadt7Kl7pwzfgcEm6G98jvF3Ki-AB34o",
-      authDomain: "dairy-manager-6d898.firebaseapp.com",
-      projectId: "dairy-manager-6d898",
-      storageBucket: "dairy-manager-6d898.firebasestorage.app",
-      messagingSenderId: "651048776070",
-      appId: "1:651048776070:web:0ca12c6bdff39e2f303c07"
-    };
-
-    // Firebase Core initializations string use karke global window reference se
-    const app = window.FirebaseApp.initializeApp(firebaseConfig);
-    const db = window.FirebaseFirestore.getFirestore(app);
-    const { doc, setDoc, getDoc } = window.FirebaseFirestore;
-
-    function Dairy() {
-      // PASTE_YOUR_APP_JSX_CODE_HERE
-      // Bhai, jo aapki 'App.jsx' file ka poora code hai, usme se shuruat ke imports ko chhodkar, 
-      // 'function Dairy() {' ke andar ka jitna bhi logic, hooks, functions, return layout hai, 
-      // usey yahan is function ke andar dhyan se paste kar do!
-      
-      return (
-        <div style={{ padding: "20px", textAlign: "center" }}>
-          <h2>Dairy Dashboard Loaded!</h2>
-          <p>Bhai agar ye screen dikh rahi hai, matlab integration complete hai.</p>
-        </div>
-      );
-    }
-
-    // Final Rendering Trigger
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<AppRunner />);
   </script>
