@@ -13,13 +13,15 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     
+    // Inhe global variables bana rahe hain taaki aapka code access kar sake
     window.React = React;
     window.useState = React.useState;
     window.useEffect = React.useEffect;
+    window.useRef = React.useRef;
     
     window.FirebaseApp = { initializeApp };
     window.FirebaseFirestore = { getFirestore, doc, setDoc, getDoc };
-    window.firebaseLoaded = true;
+    window.firebaseIsReady = true;
   </script>
 
   <style>
@@ -29,6 +31,7 @@
       background-color: #f4f8ff;
       display: flex;
       justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
     #root {
       width: 100%;
@@ -44,73 +47,69 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    function AppBootstrapper() {
-      const [ready, setReady] = React.useState(false);
-      const [error, setError] = React.useState(null);
+    function AppRunner() {
+      const [status, setStatus] = React.useState("loading");
 
       React.useEffect(() => {
-        const checkGlobals = setInterval(() => {
-          // Hum check kar rahe hain ki aapka original component global scope me aaya ya nahi
-          const MainComponent = window.Dairy || (typeof Dairy !== 'undefined' ? Dairy : null);
+        let attempts = 0;
+        const checker = setInterval(() => {
+          attempts++;
           
-          if (window.firebaseLoaded && MainComponent) {
-            window.ActualDairyComponent = MainComponent;
-            setReady(true);
-            clearInterval(checkGlobals);
+          // Hum check kar rahe hain ki kya aapka original component (Dairy) browser ko mil gaya hai
+          const TargetComponent = window.Dairy || (typeof Dairy !== 'undefined' ? Dairy : null);
+
+          if (window.firebaseIsReady && TargetComponent) {
+            window.FinalRenderApp = TargetComponent;
+            setStatus("ready");
+            clearInterval(checker);
+          }
+          
+          // Agar 8 seconds tak load nahi hua toh fallback dega
+          if (attempts > 80) {
+            clearInterval(checker);
+            setStatus("error");
           }
         }, 100);
 
-        const timeout = setTimeout(() => {
-          clearInterval(checkGlobals);
-          if (!window.ActualDairyComponent) {
-            setError("App.jsx load toh hua par browser ko aapke main component ka naam nahi mila. Ek baar check karo ki main component ka naam 'Dairy' hi hai na?");
-          }
-        }, 6000);
-
-        return () => { clearInterval(checkGlobals); clearTimeout(timeout); };
+        return () => clearInterval(checker);
       }, []);
 
-      if (error) {
-        return (
-          <div style={{ padding: "20px", color: "#e53935", fontFamily: "sans-serif", fontSize: "14px", lineHeight: "1.5" }}>
-            <h3>⚠️ Configuration Alert</h3>
-            <p>{error}</p>
-          </div>
-        );
-      }
-
-      if (!ready) {
+      if (status === "loading") {
         return (
           <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f8ff" }}>
-            <div style={{ textAlign: "center", fontFamily: "Georgia,serif", color: "#7a90aa", fontWeight: 600 }}>
-              <div style={{ fontSize: "48px" }}>🥛</div>
-              <div>Starting Dairy...</div>
+            <div style={{ textAlign: "center", color: "#4a90d9", fontWeight: 600 }}>
+              <div style={{ fontSize: "55px", animation: "bounce 1s infinite alternative" }}>🥛</div>
+              <div style={{ marginTop: "10px", fontSize: "15px", letterSpacing: "0.5px" }}>Starting Ramu Dairy...</div>
             </div>
           </div>
         );
       }
 
-      const TargetApp = window.ActualDairyComponent;
-      return <TargetApp />;
+      if (status === "error") {
+        return (
+          <div style={{ padding: "24px", color: "#e53935", fontSize: "14px", lineHeight: "1.6" }}>
+            <h3 style={{ margin: "0 0 8px 0" }}>⚠️ Engine Optimization Needed</h3>
+            <p>Bhai, files successfully load ho gayi hain par code setup static hosting par thoda sync nahi ho pa raha. Ek baar check karo ki 'App.jsx' ke end me 'export default function Dairy()' ya sirf function ka naam 'Dairy' hi hai na?</p>
+          </div>
+        );
+      }
+
+      const LiveApp = window.FinalRenderApp;
+      return <LiveApp />;
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<AppBootstrapper />);
+    root.render(<AppRunner />);
   </script>
 
   <script type="text/babel" src="App.jsx" data-plugins="transform-modules-umd"></script>
 
   <script type="text/babel">
-    // Agar component ka naam Dairy hai toh use window par bind karo
     setTimeout(() => {
-      if (typeof Dairy !== 'undefined') {
-        window.Dairy = Dairy;
-      } else if (window.exports && window.exports.Dairy) {
-        window.Dairy = window.exports.Dairy;
-      } else if (window.exports && window.exports.default) {
-        window.Dairy = window.exports.default;
-      }
-    }, 200);
+      if (typeof Dairy !== 'undefined') { window.Dairy = Dairy; }
+      else if (window.exports && window.exports.default) { window.Dairy = window.exports.default; }
+      else if (window.exports && window.exports.Dairy) { window.Dairy = window.exports.Dairy; }
+    }, 150);
   </script>
 
 </body>
