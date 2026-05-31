@@ -322,3 +322,8 @@ function HomeTab({ stockIn, sales, settings }) {
   PRODUCTS.forEach(p => { stockMap[p.id] = 0; });
   stockIn.forEach(e => { stockMap[e.product] = (stockMap[e.product] || 0) + e.qty; });
   sales.forEac
+// Apne App.jsx ke sabse end mein yeh line likh do taaki index.html isko pehchan sake:
+window.DairyApp = DairyApp; 
+
+// Agar aapne niche export default kiya hai, toh woh bhi rehne de sakte hain:
+export default DairyApp;
