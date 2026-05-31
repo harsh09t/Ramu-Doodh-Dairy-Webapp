@@ -1,6 +1,4 @@
-const { useState, useEffect } = React;
-const { initializeApp } = window.FirebaseApp;
-const { getFirestore, doc, setDoc, getDoc } = window.FirebaseFirestore;
+
 
 // ── FIREBASE SETUP ──────────────────────────────────────────────────
 const firebaseConfig = {
